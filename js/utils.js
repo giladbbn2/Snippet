@@ -52,6 +52,7 @@ $.event.special.inputchange = {
 
 	var a = 0;
     $.DeferredSeq(function(){
+      setTimeout(function(){console.log(a);}, 1);	// must be in setTimout to run!
       return $.Deferred(function(defer){
         setTimeout(function(){
           a++;
