@@ -1,7 +1,62 @@
+function submitForm(url, params, method, target){
+
+    var formEl = document.getElementById("FlowSubmitForm");
+
+    if (formEl)
+        document.getElementsByTagName('body')[0].removeChild(formEl);
+
+    formEl = document.createElement("form");
+    formEl.setAttribute("id", "FlowSubmitForm");
+    formEl.setAttribute("action", url);
+    formEl.setAttribute("method", method);
+    
+    if (typeof target !== "undefined")
+        formEl.setAttribute("target", target);
+
+    var inputEl;
+
+    for (var k in params)
+        if (params.hasOwnProperty(k)){
+            inputEl = document.createElement("input");
+            inputEl.setAttribute("type", "hidden");
+            inputEl.setAttribute("name", k);
+            inputEl.setAttribute("value", params[k]);
+            formEl.appendChild(inputEl);
+        }
+
+    document.getElementsByTagName('body')[0].appendChild(formEl);
+
+    formEl = document.getElementById("FlowSubmitForm");
+    
+    formEl.submit();
+
+}
+
+function guid() {
+    function s4() {
+      return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+function ip2long(IP) {
+    var i = 0;
+    IP = IP.match(/^([1-9]\d*|0[0-7]*|0x[\da-f]+)(?:\.([1-9]\d*|0[0-7]*|0x[\da-f]+))?(?:\.([1-9]\d*|0[0-7]*|0x[\da-f]+))?(?:\.([1-9]\d*|0[0-7]*|0x[\da-f]+))?$/i);
+    if (!IP) { return false; }
+    IP[0] = 0;
+    for (i = 1; i < 5; i += 1) {
+        IP[0] += !!((IP[i] || '').length);
+        IP[i] = parseInt(IP[i]) || 0;
+    }
+    IP.push(256, 256, 256, 256);
+    IP[4 + IP[0]] *= Math.pow(256, 4 - IP[0]);
+    if (IP[1] >= IP[5] || IP[2] >= IP[6] || IP[3] >= IP[7] || IP[4] >= IP[8]) { return 0; }
+    return IP[1] * (IP[0] === 1 || 16777216) + IP[2] * (IP[0] <= 2 || 65536) + IP[3] * (IP[0] <= 3 || 256) + IP[4] * 1;
+}
+
 /*
 *   read GET parameter
 */
-
 var _get = (function (a) {
     if (a == "") return {};
     var b = {};
@@ -16,122 +71,12 @@ var _get = (function (a) {
 })(window.location.search.substr(1).split('&'));
 
 
-
-/*
-*   Event for handling change in html inputs
-* 	Requires: JQuery
-*   usage: $('input').on('inputchange', function() { console.log(this.value) });
-*/
-
-$.event.special.inputchange = {
-    setup: function () {
-        var self = this, val;
-        $.data(this, 'timer', window.setInterval(function () {
-            val = self.value;
-            if ($.data(self, 'cache') != val) {
-                $.data(self, 'cache', val);
-                $(self).trigger('inputchange');
-            }
-        }, 20));
-    },
-    teardown: function () {
-        window.clearInterval($.data(this, 'timer'));
-    },
-    add: function () {
-        $.data(this, 'cache', this.value);
-    }
-};
-
-
-
-/*
-*   $.DeferredSeq and $.DeferredAttach functions
-* 	Requires: JQuery
-*
-*   e.g.:
-
-	var a = 0;
-    $.DeferredSeq(function(){
-      setTimeout(function(){console.log(a);}, 1);	// must be in setTimout to run!
-      return $.Deferred(function(defer){
-        setTimeout(function(){
-          a++;
-          var signal = a;
-          console.log("check if " + signal + " is greater than 4");
-          defer.resolve(signal);
-        }, 1000);
-      });
-    }, function(signal){
-	    if (signal > 4){
-        	console.log("positive");
-            return true;
-        }
-    	
-        console.log("negative");
-        return false;
-    }, 5, false).then(function(result){
-	    if (result === false)
-    	    console.log("no more tries");
-        else
-    	    console.log("final resolved signal is " + result);
-    });
-	
-*	The $.DeferredSeq function keeps executing a deferred function (first arg) consecutively until at least one of two conditions is true:
-*		- the "testf" function (second arg) evals to true
-*		- even after a maximum number of retries (third arg) the "testf" didn't eval to true, in which case a default result is resolved - the
-*		  fourth arg "noMoreTriesResult"
-*/
-$.DeferredSeq = function (df, testf, maxTries, noMoreTriesResult) {
-
-    if (typeof noMoreTriesResult === "undefined")
-        noMoreTriesResult = false;	// resolved when no more tries left
-
-    if (typeof maxTries === "undefined")
-        maxTries = 0;				// continue indefinitely
-
-    if (maxTries == 0)
-        maxTries = 99998;			// avoid recursion stack overflow
-
-    var n = maxTries;
-
-    var f = function (defer, signal) {
-        n--;
-
-        if (testf(signal)) {
-            defer.resolve(signal);
-            return;
-        }
-
-        if (n == 0) {
-            defer.resolve(noMoreTriesResult);
-            return;
-        }
-
-        return $.DeferredAttach(df, f).then(function (signal) {
-            defer.resolve(signal);
-        });
-
-    };
-
-    return $.DeferredAttach(df, f);
-}
-
-$.DeferredAttach = function (df, f) {
-    return df().then(function (signal) {
-        return $.Deferred(function (defer) {
-            f(defer, signal);
-        });
-    });
-}
-
-
-
 /*
 *   Get a date in the format YYYY-mm-dd
 */
 Date.prototype.toISODate = function () {
-    var a,
-        str = this.getFullYear().toString() + "-";
+    var a;
+    var str = this.getFullYear().toString() + "-";
 
     a = this.getMonth() + 1;
     if (a.toString().length == 1)
@@ -146,15 +91,11 @@ Date.prototype.toISODate = function () {
     return str;
 };
 
-
-
-/*
-*	AdBlock checking utility
-* 	Requires: JQuery
-*/
-
-function isAdBlock(checkBaitTime, checkBaitLoops){
+function isAdBlock(cbFinish, checkBaitTime, checkBaitLoops){
     
+    if (typeof cbFinish !== "function")
+        cbFinish = function(isDetected){};
+
     if (typeof checkBaitTime === "undefined")
         checkBaitTime = 50;
 
@@ -207,29 +148,23 @@ function isAdBlock(checkBaitTime, checkBaitLoops){
         }
     }
 
-    return $.Deferred(function(defer){
-        createBait();
-        checkBaitInterval = setInterval(function(){
-            checkBait();
-            checkBaitLoopId++;
-            if (checkBaitLoopId >= checkBaitLoops){
-                clearInterval(checkBaitInterval);
-                destroyBait();
-                defer.resolve(isDetected);
-            }
-        }, checkBaitTime);
-    });
+    createBait();
+    checkBaitInterval = setInterval(function(){
+        checkBait();
+        checkBaitLoopId++;
+        if (checkBaitLoopId >= checkBaitLoops){
+            clearInterval(checkBaitInterval);
+            destroyBait();
+
+            cbFinish(isDetected);
+        }
+    }, checkBaitTime);
 }
 
-
-
-/*
-*	NHT checking utility
-*/
-
-function isNHT() {
+function isNHT(cbFinish) {
     
-    // TODO: check fuzzy mouse movements!
+    if (typeof cbFinish !== "function")
+        cbFinish = function(isDetected){};
 
     var isDetected = (function () {
         if (window.document.documentElement.getAttribute("webdriver"))
@@ -289,9 +224,106 @@ function isNHT() {
                 continue;
             }
         }
+
+        return false;
     })();
 
-    return $.Deferred(function (defer) {
-        defer.resolve(isDetected);
+    cbFinish(isDetected);
+}
+
+function getInternalIP(cbFunc) {
+
+    var addresses = null;
+
+    // NOTE: window.RTCPeerConnection is "not a constructor" in FF22/23
+
+    if (typeof window.webkitRTCPeerConnection === "undefined" && typeof window.mozRTCPeerConnection === "undefined"){
+        cbFunc(null);
+        return;
+    }
+    
+    var addrs = {
+        "0.0.0.0": false
+    };
+
+    function updateDisplay(newAddr) {
+        
+        if (newAddr in addrs) 
+            return;
+        else 
+            addrs[newAddr] = true;
+
+        var displayAddrs = Object.keys(addrs).filter(function (k) { return addrs[k]; });
+        
+        addresses = displayAddrs;
+
+        cbFunc(addresses);
+        return;
+    }
+    
+    function grepSDP(sdp) {
+
+        var hosts = [];
+
+        sdp.split('\r\n').forEach(function (line) { // c.f. http://tools.ietf.org/html/rfc4566#page-39
+
+            if (~line.indexOf("a=candidate")) {     // http://tools.ietf.org/html/rfc4566#section-5.13
+
+                var parts = line.split(' '),        // http://tools.ietf.org/html/rfc5245#section-15.1
+                    addr = parts[4],
+                    type = parts[7];
+
+                if (type === 'host')
+                    updateDisplay(addr);
+                
+            } else if (~line.indexOf("c=")) {       // http://tools.ietf.org/html/rfc4566#section-5.7
+
+                var parts = line.split(' '),
+                    addr = parts[2];
+
+                updateDisplay(addr);
+                
+            }
+        });
+    }
+    
+    var RTCPeerConnection = window.webkitRTCPeerConnection || window.mozRTCPeerConnection; // || window.RTCPeerConnection
+    
+    var rtc = new RTCPeerConnection({ iceServers: [] });
+    
+    try {
+
+        //if (1 || window.mozRTCPeerConnection) {      // FF [and now Chrome!] needs a channel/stream to proceed
+            rtc.createDataChannel('', { reliable: false });
+        //};
+
+    } catch (err) {
+
+        cbFunc(null);
+        return;
+
+    }
+
+    rtc.onicecandidate = function (evt) {
+        // convert the candidate to SDP so we can run it through our general parser
+        // see https://twitter.com/lancestout/status/525796175425720320 for details
+
+        if (evt.candidate && addresses === null)
+            grepSDP("a=" + evt.candidate.candidate);
+        
+    };
+
+    rtc.createOffer(function (offerDesc) {
+
+        if (addresses === null)
+            grepSDP(offerDesc.sdp);
+
+        rtc.setLocalDescription(offerDesc);
+
+    }, function (e) {
+
+        //console.warn("offer failed", e); 
+
     });
+    
 }
