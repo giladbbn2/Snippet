@@ -327,3 +327,35 @@ function getInternalIP(cbFunc) {
     });
     
 }
+
+function gzip(str){
+
+    // returns Uint8Array
+
+    // e.g. var xhr = new XMLHttpRequest;
+    // xhr.open("POST", url, false);
+    // xhr.send(uint8arr.buffer);       // send ArrayBuffer in xhr
+
+    //var str2 = window.pako.gzip(str, { to: 'string' });
+    var uint8Arr = window.pako.gzip(str);
+
+    return uint8Arr;
+
+}
+
+function hex2uint8arr(str){
+
+    var bytes = new Uint8Array(Math.ceil(str.length / 2));
+
+    for (var i = 0; i < bytes.length; i++) 
+        bytes[i] = parseInt(str.substr(i * 2, 2), 16);
+
+    return bytes;
+
+}
+
+function gunzip(uint8arr){
+
+    return window.pako.ungzip(uint8arr, {to:'string'})
+
+}
