@@ -354,6 +354,27 @@ function hex2uint8arr(str){
 
 }
 
+function uint8arr2hex(arrayBuffer){
+    
+    if (typeof window["byteToHex_internalvar123"] === "undefined"){
+        
+        window["byteToHex_internalvar123"] = [];
+        
+        for (let n = 0; n <= 0xff; ++n)
+        {
+            var hexOctet = n.toString(16).padStart(2, "0");
+            window["byteToHex_internalvar123"].push(hexOctet);
+        }
+        
+    }
+    
+    return Array.prototype.map.call(
+        new Uint8Array(arrayBuffer),
+        n => window["byteToHex_internalvar123"][n]
+    ).join("");
+    
+}
+
 function gunzip(uint8arr){
 
     return window.pako.ungzip(uint8arr, {to:'string'})
